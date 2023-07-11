@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="/images/favicon.png">
+    <script src="client.js"></script>
+    
+
+    <title>ChatConnect@</title>
+</head>
+
+<body>
+
+    
+    <section class="msger">
+        <header class="msger-header">
+            <div class="msger-header-title">
+                <img width="30px" src="img/chat2.gif" alt="">
+                <p class="brand-name">ChatConnect🟢</p>
+            </div>
+        </header>
+
+        <main class="msger-chat">
+
+            <!-- <div class="notify">
+                    Rohan Joined the chat!
+            </div> -->
+
+            <!-- <div class="msg left-msg">
+                <div class="msg-bubble">
+                    <div class="msg-info">
+                        <div class="msg-info-name">Rohan</div>
+                        <div class="msg-info-time">12:45</div>
+                    </div>
+
+                    <div class="msg-text">
+                        Hello Dear, What'sapp? 😄
+                    </div>
+                </div>
+            </div>
+
+            <div class="msg right-msg">
+                <div class="msg-bubble">
+                    <div class="msg-info">
+                        <div class="msg-info-name">Rahul</div>
+                        <div class="msg-info-time">12:46</div>
+                    </div>
+
+                    <div class="msg-text">
+                        what's going on...?
+                    </div>
+                </div>
+            </div> -->
+        </main>
+
+        <form class="msger-inputarea" id="formtag">
+            <input type="text" class="msger-input" placeholder="Enter your message..." id="msgInput">
+            <button type="submit" class="msger-send-btn">Send</button>
+        </form>
+    </section>
+
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+
+
+        
+        
+        
+
+
+        function formatAMPM(date) {
+            var hours = date.getHours();
+            var minutes = date.getMinutes();
+            var ampm = hours >= 12 ? 'pm' : 'am';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // the hour '0' should be '12'
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            var strTime = hours + ':' + minutes + ' ' + ampm;
+            return strTime;
+        }
+
+        // console.log(formatAMPM(new Date));
+
+
+
+
+        const socket = io();
+
+        const form = document.getElementById('formtag');
+        const input = document.getElementById('msgInput');
+        const messagesBox = document.querySelector('.msger-chat')
+
+        const rightList = document.querySelector('.right-msg')
+        const leftList = document.querySelector('.left-msg')
+
+
+
+
+        const Append = (messages) => {
+            const messageElement = document.createElement('div');
+            messageElement.innerText = messages;
+            messageElement.classList.add('notify');
+            messagesBox.append(messageElement);
+            
+    
+
+
+
+        }
+        const appendL = (messages) => {
+            const messageElement = document.createElement('div');
+            messageElement.innerText = messages;
+            messageElement.classList.add('notify');
+            messagesBox.append(messageElement);
+
+        }
+
+        const appendsender = (myMessage) => {
+
+            const RightMain = document.createElement('div');
+            RightMain.classList.add('msg', 'right-msg');
+            messagesBox.appendChild(RightMain);
+
+            const msgBubble = document.createElement('div');
+            msgBubble.classList.add('msg-bubble');
+            RightMain.appendChild(msgBubble);
+
+            const msgInfo = document.createElement('div');
+            msgInfo.classList.add('msg-info');
+            msgBubble.appendChild(msgInfo);
+
+
+            const msgText = document.createElement('div');
+            msgInfo.classList.add('msg-text');
+            msgText.innerText = myMessage;
+            msgBubble.appendChild(msgText);
+
+            const msgInfoName = document.createElement('div');
+            msgInfoName.classList.add('msg-info-name');
+            msgInfoName.innerText = "Me"
+            msgInfo.appendChild(msgInfoName);
+
+            const msgInfoTime = document.createElement('div');
+            msgInfoName.classList.add('msg-info-time');
+            msgInfoTime.innerText = formatAMPM(new Date);
+            msgInfo.appendChild(msgInfoTime);
+
+
+        }
+
+
+        const appendReceive = (senderdata) => {
+            
+
+            const LeftMain = document.createElement('div');
+            LeftMain.classList.add('msg', 'left-msg');
+            messagesBox.appendChild(LeftMain);
+
+            const msgBubble = document.createElement('div');
+            msgBubble.classList.add('msg-bubble');
+            LeftMain.appendChild(msgBubble);
+
+            const msgInfo = document.createElement('div');
+            msgInfo.classList.add('msg-info');
+            msgBubble.appendChild(msgInfo);
+
+
+            const msgText = document.createElement('div');
+            msgInfo.classList.add('msg-text');
+            msgText.innerText = senderdata.message;
+            msgBubble.appendChild(msgText);
+
+            const msgInfoName = document.createElement('div');
+            msgInfoName.classList.add('msg-info-name');
+            msgInfoName.innerText = senderdata.name;
+            msgInfo.appendChild(msgInfoName);
+
+            const msgInfoTime = document.createElement('div');
+            msgInfoName.classList.add('msg-info-time');
+            msgInfoTime.innerHTML = formatAMPM(new Date);
+            msgInfo.appendChild(msgInfoTime);
+
+
+        }
+
+
+
+
+
+
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const message = input.value;
+            appendsender(message);
+            input.value = '';
+
+            socket.emit('send', message);            
+
+        })
+
+        let name
+        do {
+            name = prompt("Enter your name ");
+        } while (!name);
+
+        socket.emit('new-user-joined', name);
+
+
+        socket.on('user-joined', name => {
+            Append(`🟢 ${name} joined the chat! ${formatAMPM(new Date)}`);
+        })
+
+        socket.on('receive', data => {
+            appendReceive(data);
+
+        })
+
+
+        socket.on('left', person => {
+            appendL(`🔴 ${person.name} left the chat! ${formatAMPM(new Date)}`)
+        })
+
+
+    </script>
+
+</body>
+
+
+</html>
